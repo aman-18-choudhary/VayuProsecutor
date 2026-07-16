@@ -39,6 +39,10 @@ from src.fire_detector import FireDetector
 from src.historical_collector import HistoricalCollector
 from src.causal_engine import CausalProsecutor
 from src.prosecutor_report import ProsecutorReportGenerator
+from src.ward_engine import WardEngine
+from src.ward_ranker import WardRanker
+from src.ward_forecast import WardForecast
+from src.ward_recommendation import WardRecommendation
 
 import json
 
@@ -473,3 +477,69 @@ def causal(city: str):
 @app.get("/api/health")
 def health():
     return {"status": "ok", "cities": list(CITIES.keys())}
+
+# ════════════════════════════════════════════════════════════
+# WARD INTELLIGENCE MODULE
+# ════════════════════════════════════════════════════════════
+
+def _get_or_create_wards(city: str):
+    name, coords = _resolve_city(city)
+    cached = _cache_get("wards", name)
+    if cached:
+        return cached
+
+    lat, lon = coords["lat"], coords["lon"]
+    stations = _waqi_stations(lat, lon)
+    wards = WardEngine.initialize_city_wards(name, lat, lon, stations)
+    
+    _cache_set("wards", name, wards)
+    return wards
+
+@app.get("/api/wards/{city}")
+def get_all_wards(city: str):
+    wards = _get_or_create_wards(city)
+    return {"city": city, "wards": wards}
+
+@app.get("/api/ward-ranking/{city}")
+def get_ward_ranking(city: str):
+    wards = _get_or_create_wards(city)
+    ranked = WardRanker.rank_wards(wards)
+    return {"city": city, "ranking": ranked}
+
+@app.get("/api/ward/{city}/{ward_id}")
+def get_ward_profile(city: str, ward_id: str):
+    wards = _get_or_create_wards(city)
+    ward = next((w for w in wards if w["id"] == ward_id), None)
+    if not ward:
+        raise HTTPException(status_code=404, detail="Ward not found")
+        
+    score_data = WardRanker.calculate_ward_score(ward["aqi"], ward["risk_index"], ward["aqi"])
+    ward["score"] = score_data["score"]
+    ward["category"] = score_data["category"]
+    
+    return ward
+
+@app.get("/api/ward-forecast/{city}/{ward_id}")
+def get_ward_forecast(city: str, ward_id: str):
+    wards = _get_or_create_wards(city)
+    ward = next((w for w in wards if w["id"] == ward_id), None)
+    if not ward:
+        raise HTTPException(status_code=404, detail="Ward not found")
+        
+    forecast = WardForecast.get_ward_forecast(ward["lat"], ward["lon"])
+    return {"ward_id": ward_id, "forecast": forecast}
+
+@app.get("/api/ward-recommendation/{city}/{ward_id}")
+def get_ward_recommendation(city: str, ward_id: str):
+    wards = _get_or_create_wards(city)
+    ward = next((w for w in wards if w["id"] == ward_id), None)
+    if not ward:
+        raise HTTPException(status_code=404, detail="Ward not found")
+        
+    # We use some proxy sources for the recommendation since full causal per ward is slow
+    # In a real scenario, this would call CausalEngine for the ward's lat/lon
+    sources = [{"name": "Vehicular Traffic", "pct": 45}] # Mock for speed
+    
+    recs = WardRecommendation.generate_recommendations(ward["name"], ward["aqi"], ward["risk_index"], sources)
+    return {"ward_id": ward_id, "recommendations": recs}
+

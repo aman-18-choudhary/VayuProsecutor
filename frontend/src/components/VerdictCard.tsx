@@ -1,41 +1,122 @@
 import { motion } from "framer-motion";
 import type { CausalData, Culprit, Counterfactual } from "../lib/types";
-import { Card, Skeleton } from "./ui";
+import { MotionCard, Skeleton, ProgressBar, Badge, GradientButton } from "./ui";
 
+/* ── Helper ─────────────────────────────────────────────── */
 function pickPrimary(culprits: Culprit[]): Culprit | undefined {
   const flagged = culprits.find((c) => c.type === "primary");
-  if (flagged) return flagged;
-  return [...culprits].sort((a, b) => b.pct - a.pct)[0];
+  return flagged ?? [...culprits].sort((a, b) => b.pct - a.pct)[0];
 }
 
-function AnimatedBar({
-  pct,
-  color,
-  delay = 0,
-}: {
-  pct: number;
-  color: string;
-  delay?: number;
-}) {
-  const clamped = Math.max(0, Math.min(100, pct));
+/* ── Confidence chip ─────────────────────────────────────── */
+function ConfidenceChip({ level }: { level: string }) {
+  const styles: Record<string, string> = {
+    Strong:   "bg-success/10 text-success",
+    Moderate: "bg-warning/10 text-warning",
+    Weak:     "bg-danger/10 text-danger",
+  };
   return (
-    <div className="flex items-center gap-3">
-      <div className="h-3 flex-1 overflow-hidden rounded-full bg-slate-100">
-        <motion.div
-          className="h-full rounded-full"
-          style={{ backgroundColor: color }}
-          initial={{ width: "0%" }}
-          animate={{ width: `${clamped}%` }}
-          transition={{ duration: 1.1, delay, ease: "easeOut" }}
-        />
-      </div>
-      <span className="w-12 shrink-0 text-right font-mono text-sm font-semibold text-slate-800">
-        {clamped}%
-      </span>
-    </div>
+    <span
+      className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+        styles[level] ?? "bg-gray-100 text-gray-600"
+      }`}
+    >
+      {level}
+    </span>
   );
 }
 
+/* ── Culprit bar card ────────────────────────────────────── */
+function CulpritRow({
+  culprit,
+  index,
+  isPrimary,
+}: {
+  culprit: Culprit;
+  index: number;
+  isPrimary: boolean;
+}) {
+  const color  = isPrimary ? "#EF4444" : "#6366F1";
+  const bgAcc  = isPrimary ? "rgba(239,68,68,0.06)" : "rgba(99,102,241,0.06)";
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -16 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: index * 0.1 + 0.2, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      className="rounded-xl p-4"
+      style={{ backgroundColor: bgAcc }}
+    >
+      <div className="mb-2 flex items-start justify-between gap-2">
+        <div className="flex items-center gap-2.5">
+          <span className="text-xl">{culprit.icon}</span>
+          <div>
+            <div className="flex items-center gap-2">
+              <p className="font-semibold text-text-primary text-sm">{culprit.name}</p>
+              {isPrimary && (
+                <span className="rounded-full bg-danger/15 px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-danger">
+                  Primary
+                </span>
+              )}
+            </div>
+            <div className="mt-0.5 flex items-center gap-2">
+              <ConfidenceChip level={culprit.confidence} />
+              <span className="text-[10px] text-text-muted">
+                Effect: {culprit.causalEffect > 0 ? "+" : ""}{culprit.causalEffect.toFixed(2)}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div className="shrink-0 text-right">
+          <span
+            className="font-display text-2xl font-extrabold"
+            style={{ color }}
+          >
+            {culprit.pct}%
+          </span>
+        </div>
+      </div>
+      <ProgressBar
+        value={culprit.pct}
+        max={100}
+        color={color}
+        height={6}
+        delay={index * 0.1 + 0.35}
+      />
+    </motion.div>
+  );
+}
+
+/* ── Counterfactual card ─────────────────────────────────── */
+function CounterfactualCard({
+  cf,
+  index,
+}: {
+  cf: Counterfactual;
+  index: number;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.08 + 0.4, duration: 0.35 }}
+      className="flex items-center justify-between rounded-xl border border-border bg-white px-4 py-3"
+    >
+      <div>
+        <p className="text-xs font-semibold text-text-primary">Remove {cf.source}</p>
+        <p className="text-[10px] text-text-muted">{cf.resultLabel}</p>
+      </div>
+      <div className="flex items-center gap-1.5">
+        <span className="font-display text-lg font-extrabold text-success">
+          −{cf.aqiDrop}
+        </span>
+        <span className="text-xs text-text-muted">AQI</span>
+      </div>
+    </motion.div>
+  );
+}
+
+/* ── Main VerdictCard ────────────────────────────────────── */
 export function VerdictCard({
   data,
   loading,
@@ -45,130 +126,76 @@ export function VerdictCard({
 }) {
   if (loading || !data) {
     return (
-      <Card className="relative overflow-hidden">
-        <Skeleton className="mx-auto mb-6 h-6 w-56" />
-        <Skeleton className="mb-2 h-3 w-32" />
-        <Skeleton className="mb-6 h-8 w-full" />
-        <Skeleton className="mb-2 h-3 w-40" />
-        <Skeleton className="mb-2 h-6 w-full" />
-        <Skeleton className="mb-6 h-6 w-full" />
-        <Skeleton className="mb-2 h-3 w-40" />
-        <Skeleton className="h-14 w-full" />
-      </Card>
+      <MotionCard delay={0.1}>
+        <Skeleton className="mb-6 mx-auto h-6 w-48" />
+        <div className="space-y-3">
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-20 w-full" />
+        </div>
+        <div className="mt-5 space-y-2">
+          <Skeleton className="h-4 w-32" />
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-12 w-full" />
+          ))}
+        </div>
+      </MotionCard>
     );
   }
 
-  const primary = pickPrimary(data.culprits);
+  const primary     = pickPrimary(data.culprits);
   const secondaries = data.culprits.filter((c) => c !== primary);
-  const counterfactual: Counterfactual | undefined = primary
-    ? data.counterfactuals.find(
-        (cf) =>
-          cf.source.toLowerCase() === primary.name.toLowerCase() ||
-          cf.source.toLowerCase().includes(primary.name.toLowerCase()) ||
-          primary.name.toLowerCase().includes(cf.source.toLowerCase())
-      ) ?? data.counterfactuals[0]
-    : data.counterfactuals[0];
 
   return (
-    <motion.div
-      initial={{ scale: 0.85, rotate: -3, opacity: 0 }}
-      animate={{ scale: 1, rotate: 0, opacity: 1 }}
-      transition={{ type: "spring", stiffness: 220, damping: 16 }}
-    >
-      <Card
-        className="relative overflow-hidden border-crimson/40"
-        glow="0 0 32px rgba(192,57,43,0.35)"
-      >
-        {/* Sound-wave ripple rings behind the header */}
-        <div
-          className="pointer-events-none absolute left-1/2 top-8 -translate-x-1/2"
-          aria-hidden="true"
-        >
-          <div className="relative">
-            <span className="animate-ripple absolute left-1/2 top-1/2 h-16 w-16 -translate-x-1/2 -translate-y-1/2 rounded-full border border-crimson/50" />
-            <span
-              className="animate-ripple absolute left-1/2 top-1/2 h-16 w-16 -translate-x-1/2 -translate-y-1/2 rounded-full border border-crimson/40"
-              style={{ animationDelay: "0.5s" }}
-            />
-            <span
-              className="animate-ripple absolute left-1/2 top-1/2 h-16 w-16 -translate-x-1/2 -translate-y-1/2 rounded-full border border-crimson/30"
-              style={{ animationDelay: "1s" }}
-            />
-          </div>
-        </div>
+    <MotionCard delay={0.1} className="relative overflow-hidden">
+      {/* Subtle crimson glow top-right */}
+      <div className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-danger/10 blur-3xl" />
 
-        {/* Header */}
-        <div className="relative z-10 mb-6 text-center">
-          <div className="mb-1 text-3xl" aria-hidden="true">
-            ⚖️
-          </div>
-          <h2 className="text-lg font-bold uppercase tracking-[0.25em] text-crimson-light">
-            Prosecution Verdict
-          </h2>
-          <div className="mx-auto mt-2 h-px w-24 bg-crimson/50" />
-        </div>
+      {/* Header */}
+      <div className="relative mb-5 text-center">
+        <div className="mb-1 text-3xl">⚖️</div>
+        <h2 className="font-display text-lg font-extrabold uppercase tracking-[0.2em] text-text-primary">
+          Prosecution Verdict
+        </h2>
+        <div className="mx-auto mt-2 h-0.5 w-16 rounded-full bg-gradient-brand" />
+      </div>
 
-        {/* Primary culprit */}
+      {/* Culprits */}
+      <div className="relative space-y-3">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-text-muted">
+          Causal Responsibility
+        </p>
         {primary && (
-          <div className="relative z-10 mb-6">
-            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-              Primary Culprit
-            </div>
-            <div className="mb-2 flex items-center gap-2">
-              <span className="text-2xl" aria-hidden="true">
-                {primary.icon}
-              </span>
-              <span className="text-xl font-bold text-crimson-light">
-                {primary.name}
-              </span>
-            </div>
-            <AnimatedBar pct={primary.pct} color="#C0392B" delay={0.3} />
-          </div>
+          <CulpritRow culprit={primary} index={0} isPrimary />
         )}
+        {secondaries.map((c, i) => (
+          <CulpritRow key={c.name} culprit={c} index={i + 1} isPrimary={false} />
+        ))}
+      </div>
 
-        {/* Contributing factors */}
-        {secondaries.length > 0 && (
-          <div className="relative z-10 mb-6">
-            <div className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-              Contributing Factors
-            </div>
-            <div className="space-y-3">
-              {secondaries.map((c, i) => (
-                <div key={c.name}>
-                  <div className="mb-1 flex items-center gap-2 text-sm text-slate-700">
-                    <span aria-hidden="true">{c.icon}</span>
-                    <span className="font-medium">{c.name}</span>
-                  </div>
-                  <AnimatedBar
-                    pct={c.pct}
-                    color="#F39C12"
-                    delay={0.5 + i * 0.15}
-                  />
-                </div>
-              ))}
-            </div>
+      {/* Counterfactuals */}
+      {data.counterfactuals.length > 0 && (
+        <div className="mt-5">
+          <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-text-muted">
+            Counterfactual Analysis — if source removed
+          </p>
+          <div className="space-y-2">
+            {data.counterfactuals.map((cf, i) => (
+              <CounterfactualCard key={cf.source} cf={cf} index={i} />
+            ))}
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Counterfactual */}
-        {counterfactual && (
-          <div className="relative z-10 rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-              Counterfactual
-            </div>
-            <p className="font-mono text-sm text-slate-800">
-              Remove {counterfactual.source} → AQI drops{" "}
-              <span className="font-semibold text-crimson-light">
-                {counterfactual.aqiDrop}
-              </span>{" "}
-              pts
-            </p>
-            <p className="mt-1 font-mono text-sm font-semibold text-teal">
-              {counterfactual.resultLabel}
-            </p>
-          </div>
-        )}
-      </Card>
-    </motion.div>
+      {/* Methodology badge */}
+      <div className="mt-4 flex items-center gap-2 rounded-xl bg-primary/5 px-3 py-2">
+        <span className="text-sm">🔬</span>
+        <p className="text-[10px] text-text-muted">
+          Powered by{" "}
+          <span className="font-semibold text-primary">Microsoft DoWhy</span>{" "}
+          · Judea Pearl's do-calculus
+        </p>
+      </div>
+    </MotionCard>
   );
 }

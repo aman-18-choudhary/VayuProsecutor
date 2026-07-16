@@ -3,58 +3,73 @@ import { useCausalData } from "../lib/api";
 import { VerdictCard } from "../components/VerdictCard";
 import { CausalDAG } from "../components/CausalDAG";
 import { LegalBrief } from "../components/LegalBrief";
-import { Card, Skeleton } from "../components/ui";
+import { MotionCard, Skeleton, LiveDot } from "../components/ui";
 import type { SourceStatus } from "../lib/types";
 
-const STEPS = ["Data Collection", "Causal Analysis", "Verdict"];
-
-const KNOWN_SOURCES = [
-  "Open-Meteo",
-  "AQICN",
-  "TomTom",
-  "NASA FIRMS",
-  "OpenStreetMap",
+/* ── Step names for the progress tracker ────────────────── */
+const STEPS = [
+  { id: "data",       label: "Data Collection",   icon: "🗄️",  desc: "Fetching 6 months historical data" },
+  { id: "causal",     label: "Causal Analysis",   icon: "🔬",  desc: "Running DoWhy do-calculus" },
+  { id: "verdict",    label: "Verdict",            icon: "⚖️",  desc: "Ranking pollution sources" },
+  { id: "report",     label: "Legal Report",       icon: "📋",  desc: "Generating prosecution brief" },
 ];
 
-function ProgressIndicator({ loading }: { loading: boolean }) {
-  const complete = !loading;
+/* ── Investigation progress tracker ─────────────────────── */
+function InvestigationProgress({ loading }: { loading: boolean }) {
+  const done = !loading;
   return (
-    <div className="w-full">
-      <div className="flex items-center">
+    <MotionCard delay={0} className="overflow-hidden">
+      <div className="mb-1 flex items-center justify-between">
+        <h3 className="font-display text-sm font-bold text-text-primary">
+          Investigation Pipeline
+        </h3>
+        <span className={`flex items-center gap-1.5 text-xs font-semibold ${done ? "text-success" : "text-primary"}`}>
+          {done ? (
+            <>✓ Analysis Complete</>
+          ) : (
+            <>
+              <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.2" />
+                <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+              </svg>
+              Analyzing…
+            </>
+          )}
+        </span>
+      </div>
+      <div className="mt-4 flex items-center gap-0">
         {STEPS.map((step, i) => {
           const isLast = i === STEPS.length - 1;
           return (
-            <div key={step} className="flex items-center flex-1 last:flex-none">
-              <div className="flex items-center gap-3">
+            <div key={step.id} className="flex flex-1 items-center last:flex-none">
+              <div className="group flex flex-col items-center gap-1.5 text-center">
                 <motion.div
-                  initial={{ scale: 0.8, opacity: 0 }}
+                  initial={{ scale: 0.7, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: i * 0.15 }}
+                  transition={{ delay: i * 0.12 + 0.1 }}
                   className={[
-                    "flex items-center justify-center rounded-full h-9 w-9 text-sm font-bold border-2 shrink-0",
-                    complete
-                      ? "bg-teal/10 border-teal text-teal"
-                      : "bg-slate-100 border-slate-200 text-slate-500",
+                    "flex h-10 w-10 items-center justify-center rounded-2xl text-sm transition-all duration-300",
+                    done
+                      ? "bg-primary text-white shadow-glow-primary"
+                      : "border-2 border-border bg-white text-text-muted",
                   ].join(" ")}
                 >
-                  {complete ? "✓" : i + 1}
+                  {done ? "✓" : step.icon}
                 </motion.div>
-                <span
-                  className={[
-                    "text-sm font-medium whitespace-nowrap",
-                    complete ? "text-slate-800" : "text-slate-500",
-                  ].join(" ")}
-                >
-                  {step}
-                </span>
+                <div>
+                  <p className={`text-[10px] font-bold leading-tight ${done ? "text-text-primary" : "text-text-muted"}`}>
+                    {step.label}
+                  </p>
+                  <p className="hidden text-[9px] text-text-muted sm:block">{step.desc}</p>
+                </div>
               </div>
               {!isLast && (
-                <div className="relative flex-1 mx-4 h-0.5 bg-slate-200 rounded-full overflow-hidden">
+                <div className="relative mx-2 flex-1 h-0.5 bg-border rounded-full overflow-hidden -mt-5">
                   <motion.div
-                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-crimson to-teal rounded-full"
+                    className="absolute inset-y-0 left-0 rounded-full bg-gradient-brand"
                     initial={{ width: "0%" }}
-                    animate={{ width: complete ? "100%" : "35%" }}
-                    transition={{ duration: 0.6, delay: i * 0.2 }}
+                    animate={{ width: done ? "100%" : "30%" }}
+                    transition={{ duration: 0.7, delay: i * 0.15, ease: [0.22, 1, 0.36, 1] }}
                   />
                 </div>
               )}
@@ -62,10 +77,22 @@ function ProgressIndicator({ loading }: { loading: boolean }) {
           );
         })}
       </div>
-    </div>
+    </MotionCard>
   );
 }
 
+/* ── Known data sources ──────────────────────────────────── */
+const KNOWN_SOURCES = ["Open-Meteo", "AQICN", "TomTom", "NASA FIRMS", "OpenStreetMap"];
+
+const SOURCE_ICONS: Record<string, string> = {
+  "Open-Meteo":    "🌤️",
+  "AQICN":         "📡",
+  "TomTom":        "🗺️",
+  "NASA FIRMS":    "🛰️",
+  "OpenStreetMap": "🌍",
+};
+
+/* ── Evidence Locker ─────────────────────────────────────── */
 function EvidenceLocker({
   loading,
   months,
@@ -77,87 +104,115 @@ function EvidenceLocker({
   rows?: number;
   sources?: SourceStatus[];
 }) {
-  const statusFor = (name: string): "ok" | "down" => {
-    const found = sources?.find((s) => s.name === name);
-    return found ? found.status : "ok";
-  };
+  const statusFor = (name: string): "ok" | "down" =>
+    sources?.find((s) => s.name === name)?.status ?? "ok";
 
   return (
-    <Card className="p-4">
-      <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-600 mb-3">
-        Evidence Locker
-      </h3>
+    <MotionCard delay={0.1} className="h-full">
+      <div className="mb-4">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-text-muted">
+          Evidence Locker
+        </p>
+        <h3 className="font-display text-base font-bold text-text-primary">Data Sources</h3>
+      </div>
 
       {loading ? (
         <div className="space-y-3">
-          <Skeleton className="h-4 w-3/4" />
-          <Skeleton className="h-4 w-1/2" />
-          <div className="space-y-2 pt-2">
-            {KNOWN_SOURCES.map((s) => (
-              <Skeleton key={s} className="h-4 w-full" />
-            ))}
-          </div>
+          <Skeleton className="h-14 w-full" />
+          <Skeleton className="h-14 w-full" />
+          {KNOWN_SOURCES.map((s) => (
+            <Skeleton key={s} className="h-8 w-full" />
+          ))}
         </div>
       ) : (
         <>
-          <div className="space-y-2 mb-4">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-slate-500">Time Range</span>
-              <span className="font-mono text-slate-800">
-                {months ?? 0} months
-              </span>
+          {/* Stats */}
+          <div className="mb-4 grid grid-cols-2 gap-3">
+            <div className="rounded-xl bg-primary/5 p-3 text-center">
+              <p className="font-display text-2xl font-extrabold text-primary">{months ?? 0}</p>
+              <p className="text-[10px] text-text-muted">Months Data</p>
             </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-slate-500">Records</span>
-              <span className="font-mono text-slate-800">
-                {(rows ?? 0).toLocaleString()} rows
-              </span>
+            <div className="rounded-xl bg-success/5 p-3 text-center">
+              <p className="font-display text-2xl font-extrabold text-success">
+                {((rows ?? 0) / 1000).toFixed(1)}K
+              </p>
+              <p className="text-[10px] text-text-muted">Records</p>
             </div>
           </div>
 
-          <div className="border-t border-slate-200 pt-3">
-            <p className="text-xs uppercase tracking-wide text-slate-500 mb-2">
-              Sources
+          {/* Source list */}
+          <div className="space-y-2">
+            {KNOWN_SOURCES.map((name, i) => {
+              const ok = statusFor(name) === "ok";
+              return (
+                <motion.div
+                  key={name}
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.07 + 0.2 }}
+                  className="flex items-center justify-between rounded-xl bg-bg-muted px-3 py-2.5"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">{SOURCE_ICONS[name] ?? "📊"}</span>
+                    <span className="text-xs font-medium text-text-secondary">{name}</span>
+                  </div>
+                  <div className={`flex items-center gap-1 ${ok ? "text-success" : "text-danger"}`}>
+                    <div className={`h-1.5 w-1.5 rounded-full ${ok ? "bg-success" : "bg-danger"}`} />
+                    <span className="text-[10px] font-semibold">{ok ? "Online" : "Down"}</span>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+
+          {/* Methodology note */}
+          <div className="mt-4 rounded-xl bg-gradient-to-br from-primary/8 to-transparent p-3">
+            <p className="text-[10px] leading-relaxed text-text-secondary">
+              🔬 <span className="font-semibold">Methodology:</span> Microsoft DoWhy, Judea Pearl's
+              do-calculus, backdoor linear regression with refutation testing.
             </p>
-            <ul className="space-y-2">
-              {KNOWN_SOURCES.map((name) => {
-                const ok = statusFor(name) === "ok";
-                return (
-                  <li
-                    key={name}
-                    className="flex items-center gap-2 text-sm text-slate-700"
-                  >
-                    <span
-                      className={[
-                        "h-2 w-2 rounded-full shrink-0",
-                        ok ? "bg-emerald-400" : "bg-crimson",
-                      ].join(" ")}
-                      title={ok ? "ok" : "down"}
-                    />
-                    <span>{name}</span>
-                  </li>
-                );
-              })}
-            </ul>
           </div>
         </>
       )}
-    </Card>
+    </MotionCard>
   );
 }
 
+/* ── Page ───────────────────────────────────────────────── */
 export function CausalProsecutor({ city }: { city: string }) {
   const { data: causal, isLoading } = useCausalData(city);
 
   return (
     <div className="space-y-6">
-      {/* Progress indicator */}
-      <Card className="p-5">
-        <ProgressIndicator loading={isLoading} />
-      </Card>
+      {/* Page header */}
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-start justify-between gap-4"
+      >
+        <div>
+          <h2 className="font-display text-2xl font-extrabold text-text-primary">
+            Causal Prosecutor
+          </h2>
+          <p className="text-sm text-text-secondary">
+            AI-powered root cause analysis for{" "}
+            <span className="font-semibold text-text-primary">{city}</span>
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <LiveDot color={isLoading ? "#F59E0B" : "#22C55E"} />
+          <span className="text-xs text-text-muted">
+            {isLoading ? "Analyzing…" : "Analysis ready"}
+          </span>
+        </div>
+      </motion.div>
 
-      {/* Main grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      {/* Step progress */}
+      <InvestigationProgress loading={isLoading} />
+
+      {/* Main investigation grid */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        {/* Evidence locker */}
         <div className="lg:col-span-3">
           <EvidenceLocker
             loading={isLoading}
@@ -166,15 +221,19 @@ export function CausalProsecutor({ city }: { city: string }) {
             sources={causal?.dataSummary.sources}
           />
         </div>
+
+        {/* Verdict card */}
         <div className="lg:col-span-5">
           <VerdictCard data={causal} loading={isLoading} />
         </div>
+
+        {/* Causal DAG */}
         <div className="lg:col-span-4">
           <CausalDAG dag={causal?.dag} loading={isLoading} />
         </div>
       </div>
 
-      {/* Legal brief */}
+      {/* Legal brief — full width */}
       <LegalBrief brief={causal?.brief} city={city} loading={isLoading} />
     </div>
   );

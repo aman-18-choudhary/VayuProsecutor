@@ -1,4 +1,5 @@
 import React from "react";
+import { motion } from "framer-motion";
 import {
   ResponsiveContainer,
   BarChart,
@@ -7,10 +8,9 @@ import {
   YAxis,
   Cell,
   Tooltip,
-  ReferenceLine,
 } from "recharts";
 import type { LiveData, Pollutant } from "../lib/types";
-import { Card, SectionTitle, Skeleton } from "./ui";
+import { MotionCard, SectionTitle, Skeleton } from "./ui";
 
 interface Row {
   name: string;
@@ -18,40 +18,87 @@ interface Row {
   whoLimit: number;
   unit: string;
   over: boolean;
+  pct: number;
 }
 
 function buildRows(data: LiveData): Row[] {
   const defs: [string, Pollutant][] = [
     ["PM2.5", data.pm25],
-    ["PM10", data.pm10],
-    ["NO₂", data.no2],
-    ["CO", data.co],
-    ["O₃", data.o3],
-    ["SO₂", data.so2],
+    ["PM10",  data.pm10],
+    ["NO₂",   data.no2],
+    ["CO",    data.co],
+    ["O₃",    data.o3],
+    ["SO₂",   data.so2],
   ];
   return defs.map(([name, p]) => ({
     name,
-    value: p.value,
+    value:    p.value,
     whoLimit: p.whoLimit,
-    unit: p.unit,
-    over: p.value > p.whoLimit,
+    unit:     p.unit,
+    over:     p.value > p.whoLimit,
+    pct:      Math.round(Math.min((p.value / p.whoLimit) * 100, 300)),
   }));
 }
 
-function CustomTooltip({ active, payload }: any) {
-  if (!active || !payload || !payload.length) return null;
+function BarTooltip({ active, payload }: any) {
+  if (!active || !payload?.length) return null;
   const row: Row = payload[0].payload;
   return (
-    <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs shadow-lg">
-      <p className="font-semibold text-slate-900">{row.name}</p>
-      <p className="font-mono text-slate-700">
-        {row.value} {row.unit}
+    <div className="rounded-xl border border-border bg-white px-4 py-3 shadow-card-xl">
+      <p className="mb-1 font-semibold text-text-primary">{row.name}</p>
+      <p className="font-mono text-sm text-text-secondary">
+        {row.value} <span className="text-text-muted">{row.unit}</span>
       </p>
-      <p className="font-mono text-slate-500">WHO limit: {row.whoLimit}</p>
-      <p className={row.over ? "text-crimson-light" : "text-teal"}>
-        {row.over ? "Over safe limit" : "Within safe limit"}
+      <p className="font-mono text-xs text-text-muted">WHO limit: {row.whoLimit}</p>
+      <p
+        className={`mt-1 text-xs font-semibold ${
+          row.over ? "text-danger" : "text-success"
+        }`}
+      >
+        {row.over ? `${(row.value / row.whoLimit).toFixed(1)}× over limit` : "✓ Within limit"}
       </p>
     </div>
+  );
+}
+
+/* ── Horizontal progress row (alternative to recharts) ──── */
+function PollutantRow({ row, delay }: { row: Row; delay: number }) {
+  const clampedPct = Math.min(row.pct, 300);
+  const displayPct = Math.min(clampedPct, 100);
+  const color = row.over ? "#EF4444" : "#6366F1";
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -12 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.4, delay, ease: [0.22, 1, 0.36, 1] }}
+      className="group"
+    >
+      <div className="mb-1.5 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-text-primary">{row.name}</span>
+          {row.over && (
+            <span className="rounded-full bg-danger/10 px-1.5 py-0.5 text-[9px] font-bold text-danger">
+              OVER
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="font-mono text-xs font-bold text-text-primary">{row.value}</span>
+          <span className="text-[10px] text-text-muted">{row.unit}</span>
+          <span className="text-[10px] text-text-muted">/ WHO {row.whoLimit}</span>
+        </div>
+      </div>
+      <div className="h-2 overflow-hidden rounded-full bg-bg-muted">
+        <motion.div
+          className="h-full rounded-full"
+          style={{ backgroundColor: color }}
+          initial={{ width: "0%" }}
+          animate={{ width: `${displayPct}%` }}
+          transition={{ duration: 1, delay: delay + 0.1, ease: [0.22, 1, 0.36, 1] }}
+        />
+      </div>
+    </motion.div>
   );
 }
 
@@ -64,83 +111,42 @@ export function PollutantBars({
 }) {
   if (loading || !data) {
     return (
-      <Card>
-        <SectionTitle icon="🧪">Pollutants vs WHO Safe Limit</SectionTitle>
-        <div className="flex flex-col gap-3">
+      <MotionCard delay={0.1}>
+        <SectionTitle>Pollutants vs WHO Limit</SectionTitle>
+        <div className="space-y-4">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-6 w-full" />
+            <div key={i} className="space-y-1.5">
+              <Skeleton className="h-3 w-24" />
+              <Skeleton className="h-2 w-full" />
+            </div>
           ))}
         </div>
-      </Card>
+      </MotionCard>
     );
   }
 
   const rows = buildRows(data);
-  const maxLimit = Math.max(...rows.map((r) => r.whoLimit));
 
   return (
-    <Card>
-      <SectionTitle icon="🧪">Pollutants vs WHO Safe Limit</SectionTitle>
-      <div className="h-72 w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={rows}
-            layout="vertical"
-            margin={{ top: 4, right: 16, bottom: 4, left: 8 }}
-            barCategoryGap="28%"
-          >
-            <XAxis
-              type="number"
-              tick={{ fill: "#94a3b8", fontSize: 11 }}
-              axisLine={{ stroke: "#E2E8F0" }}
-              tickLine={false}
-            />
-            <YAxis
-              type="category"
-              dataKey="name"
-              width={52}
-              tick={{ fill: "#94a3b8", fontSize: 12 }}
-              axisLine={false}
-              tickLine={false}
-            />
-            <Tooltip
-              content={<CustomTooltip />}
-              cursor={{ fill: "rgba(148,163,184,0.08)" }}
-            />
-            {rows.map((r) => (
-              <ReferenceLine
-                key={`ref-${r.name}`}
-                x={r.whoLimit}
-                stroke="transparent"
-              />
-            ))}
-            <ReferenceLine
-              x={maxLimit}
-              stroke="#F39C12"
-              strokeDasharray="4 4"
-              strokeOpacity={0.3}
-            />
-            <Bar dataKey="value" radius={[0, 6, 6, 0]} maxBarSize={22}>
-              {rows.map((r) => (
-                <Cell
-                  key={`cell-${r.name}`}
-                  fill={r.over ? "#C0392B" : "#00D4FF"}
-                />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+    <MotionCard delay={0.1}>
+      <SectionTitle>Pollutants vs WHO Limit</SectionTitle>
+      <div className="space-y-4">
+        {rows.map((row, i) => (
+          <PollutantRow key={row.name} row={row} delay={i * 0.06} />
+        ))}
       </div>
-      <div className="mt-3 flex flex-wrap items-center gap-4 text-[11px] text-slate-500">
-        <span className="flex items-center gap-1.5">
-          <span className="inline-block h-2.5 w-2.5 rounded-sm bg-teal" />
-          Within limit
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="inline-block h-2.5 w-2.5 rounded-sm bg-crimson" />
-          Over WHO limit
-        </span>
+
+      {/* Legend */}
+      <div className="mt-4 flex items-center gap-4 border-t border-border pt-3">
+        <div className="flex items-center gap-1.5">
+          <div className="h-2 w-3 rounded-full bg-primary" />
+          <span className="text-[10px] text-text-muted">Within limit</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="h-2 w-3 rounded-full bg-danger" />
+          <span className="text-[10px] text-text-muted">Over WHO limit</span>
+        </div>
       </div>
-    </Card>
+    </MotionCard>
   );
 }
