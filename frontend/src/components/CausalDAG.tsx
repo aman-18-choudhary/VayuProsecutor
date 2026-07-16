@@ -2,93 +2,98 @@ import { useMemo } from "react";
 import ReactFlow, { Background, Controls, MarkerType } from "reactflow";
 import type { Node, Edge } from "reactflow";
 import type { DagNode, DagEdge } from "../lib/types";
-import { Card, Skeleton, SectionTitle } from "./ui";
+import { MotionCard, Skeleton, SectionTitle } from "./ui";
 
-const KIND_STYLE: Record<
-  DagNode["kind"],
-  { border: string; color: string }
-> = {
-  source: { border: "#00D4FF", color: "#00D4FF" },
-  mediator: { border: "#F39C12", color: "#F39C12" },
-  outcome: { border: "#C0392B", color: "#E74C3C" },
+/* ── Node style map ─────────────────────────────────────── */
+const KIND_STYLE: Record<DagNode["kind"], { bg: string; border: string; text: string }> = {
+  source:   { bg: "#EFF6FF", border: "#3B82F6", text: "#1D4ED8" },
+  mediator: { bg: "#FFFBEB", border: "#F59E0B", text: "#B45309" },
+  outcome:  { bg: "#FEF2F2", border: "#EF4444", text: "#B91C1C" },
 };
 
+/* ── Layout builder ─────────────────────────────────────── */
 function buildNodes(dagNodes: DagNode[]): Node[] {
-  const sources = dagNodes.filter((n) => n.kind === "source");
+  const sources   = dagNodes.filter((n) => n.kind === "source");
   const mediators = dagNodes.filter((n) => n.kind === "mediator");
-  const outcomes = dagNodes.filter((n) => n.kind === "outcome");
+  const outcomes  = dagNodes.filter((n) => n.kind === "outcome");
 
-  const COL_SOURCE = 0;
-  const COL_MEDIATOR = 340;
-  const COL_OUTCOME = 680;
+  const COL_X = [0, 260, 520];
   const ROW_GAP = 90;
-
   const nodes: Node[] = [];
 
-  const sourceHeight = Math.max(sources.length - 1, 0) * ROW_GAP;
+  const srcHeight = Math.max(sources.length - 1, 0) * ROW_GAP;
+
   sources.forEach((n, i) => {
-    nodes.push(makeNode(n, COL_SOURCE, i * ROW_GAP));
+    nodes.push(makeNode(n, COL_X[0], i * ROW_GAP));
   });
-
-  const mediatorOffset = sourceHeight / 2 - ((mediators.length - 1) * ROW_GAP) / 2;
+  const medOffset = srcHeight / 2 - ((mediators.length - 1) * ROW_GAP) / 2;
   mediators.forEach((n, i) => {
-    nodes.push(makeNode(n, COL_MEDIATOR, mediatorOffset + i * ROW_GAP));
+    nodes.push(makeNode(n, COL_X[1], medOffset + i * ROW_GAP));
   });
-
-  const outcomeOffset = sourceHeight / 2 - ((outcomes.length - 1) * ROW_GAP) / 2;
+  const outOffset = srcHeight / 2 - ((outcomes.length - 1) * ROW_GAP) / 2;
   outcomes.forEach((n, i) => {
-    nodes.push(makeNode(n, COL_OUTCOME, outcomeOffset + i * ROW_GAP));
+    nodes.push(makeNode(n, COL_X[2], outOffset + i * ROW_GAP));
   });
 
   return nodes;
 }
 
 function makeNode(n: DagNode, x: number, y: number): Node {
-  const style = KIND_STYLE[n.kind];
+  const s = KIND_STYLE[n.kind];
   return {
-    id: n.id,
+    id:       n.id,
     position: { x, y },
-    data: { label: `${n.icon} ${n.label}` },
-    style: {
-      background: "#FFFFFF",
-      border: `2px solid ${style.border}`,
-      color: style.color,
+    data:     { label: `${n.icon} ${n.label}` },
+    style:    {
+      background:  s.bg,
+      border:      `1.5px solid ${s.border}`,
+      color:       s.text,
       borderRadius: 12,
-      padding: "8px 14px",
-      fontSize: 13,
-      fontWeight: 600,
-      minWidth: 120,
-      textAlign: "center" as const,
+      padding:     "8px 16px",
+      fontSize:    12,
+      fontWeight:  700,
+      fontFamily:  "'Plus Jakarta Sans', sans-serif",
+      minWidth:    120,
+      textAlign:   "center" as const,
+      boxShadow:   "0 2px 8px rgba(0,0,0,0.06)",
     },
     sourcePosition: "right" as any,
-    targetPosition: "left" as any,
+    targetPosition: "left"  as any,
   };
 }
 
+/* ── Edge builder ───────────────────────────────────────── */
 function buildEdges(dagEdges: DagEdge[]): Edge[] {
-  return dagEdges.map((e, i) => {
-    const label = `P(AQI|do(X))=${e.prob}`;
-    return {
-      id: `e-${e.source}-${e.target}-${i}`,
-      source: e.source,
-      target: e.target,
-      animated: true,
-      label,
-      labelShowBg: true,
-      labelBgStyle: { fill: "#F1F5F9", fillOpacity: 0.9 },
-      labelStyle: { fill: "#475569", fontSize: 10, fontFamily: "JetBrains Mono, monospace" },
-      style: {
-        stroke: "#C0392B",
-        strokeWidth: 1 + e.strength * 4,
-      },
-      markerEnd: {
-        type: MarkerType.ArrowClosed,
-        color: "#C0392B",
-      },
-    } as Edge;
-  });
+  return dagEdges.map((e, i) => ({
+    id:         `e-${e.source}-${e.target}-${i}`,
+    source:     e.source,
+    target:     e.target,
+    animated:   true,
+    label:      `p=${e.prob.toFixed(2)}`,
+    labelShowBg: true,
+    labelBgStyle: { fill: "#FFFFFF", fillOpacity: 0.95, rx: 6, ry: 6 },
+    labelBgPadding: [4, 6] as [number, number],
+    labelStyle: {
+      fill:       "#6B7280",
+      fontSize:   9,
+      fontFamily: "'JetBrains Mono', monospace",
+      fontWeight: 600,
+    },
+    style: {
+      stroke:      "#6366F1",
+      strokeWidth:  Math.max(1, 1 + e.strength * 3.5),
+      strokeOpacity: 0.6 + e.strength * 0.4,
+    },
+    markerEnd: {
+      type:  MarkerType.ArrowClosed,
+      color: "#6366F1",
+      width: 12,
+      height: 12,
+    },
+  } as Edge));
 }
 
+/* ── Main export ────────────────────────────────────────── */
 export function CausalDAG({
   dag,
   loading,
@@ -101,28 +106,53 @@ export function CausalDAG({
 
   if (loading || !dag) {
     return (
-      <Card>
-        <SectionTitle icon="🔗">Causal DAG — do(X) → AQI</SectionTitle>
-        <Skeleton className="h-[420px] w-full" />
-      </Card>
+      <MotionCard delay={0.2}>
+        <SectionTitle>Causal Graph · do(X) → AQI</SectionTitle>
+        <Skeleton className="h-[380px] w-full" />
+      </MotionCard>
     );
   }
 
   return (
-    <Card>
-      <SectionTitle icon="🔗">Causal DAG — do(X) → AQI</SectionTitle>
-      <div className="h-[420px] w-full overflow-hidden rounded-xl border border-slate-200">
+    <MotionCard delay={0.2}>
+      <div className="mb-4 flex items-start justify-between">
+        <SectionTitle>Causal Graph · do(X) → AQI</SectionTitle>
+        <div className="flex flex-col gap-1">
+          {[
+            { color: "#3B82F6", label: "Source" },
+            { color: "#F59E0B", label: "Mediator" },
+            { color: "#EF4444", label: "Outcome" },
+          ].map((l) => (
+            <div key={l.label} className="flex items-center gap-1.5">
+              <div
+                className="h-2 w-2 rounded-full"
+                style={{ backgroundColor: l.color }}
+              />
+              <span className="text-[10px] text-text-muted">{l.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="h-[380px] w-full overflow-hidden rounded-2xl border border-border">
         <ReactFlow
           nodes={nodes}
           edges={edges}
           fitView
           proOptions={{ hideAttribution: true }}
           nodesConnectable={false}
+          nodesDraggable={false}
         >
-          <Background color="#CBD5E1" gap={20} />
-          <Controls />
+          <Background color="#F3F4F6" gap={24} size={1} />
+          <Controls showInteractive={false} />
         </ReactFlow>
       </div>
-    </Card>
+
+      {/* Edge weight note */}
+      <p className="mt-3 text-[10px] text-text-muted">
+        Edge thickness = causal effect strength. Labels show
+        P(AQI | do(X)) probability.
+      </p>
+    </MotionCard>
   );
 }
