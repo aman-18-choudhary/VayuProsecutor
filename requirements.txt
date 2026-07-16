@@ -1,0 +1,15 @@
+# VayuProsecutor — Python backend dependencies
+# Run: pip install -r requirements.txt
+# Then: pip install fastapi "uvicorn[standard]"
+
+pandas==2.2.2
+numpy==1.26.4
+requests==2.32.3
+dowhy==0.11.1
+networkx==3.3
+scikit-learn==1.5.1
+prophet==1.1.5
+openai==1.35.0
+python-dotenv==1.0.1
+fastapi
+uvicorn[standard]

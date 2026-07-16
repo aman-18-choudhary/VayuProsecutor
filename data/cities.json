@@ -1,0 +1,92 @@
+{
+  "Mumbai": {
+    "lat": 19.076,
+    "lon": 72.8777,
+    "traffic_points": [
+      {"name": "Western Express Highway", "lat": 19.12, "lon": 72.84},
+      {"name": "Eastern Express Highway", "lat": 19.08, "lon": 72.91},
+      {"name": "LBS Marg", "lat": 19.07, "lon": 72.88}
+    ]
+  },
+  "Delhi": {
+    "lat": 28.6139,
+    "lon": 77.209,
+    "traffic_points": [
+      {"name": "Ring Road - South", "lat": 28.59, "lon": 77.22},
+      {"name": "NH-48 Gurugram", "lat": 28.47, "lon": 77.07},
+      {"name": "GT Karnal Road", "lat": 28.72, "lon": 77.15}
+    ]
+  },
+  "Bangalore": {
+    "lat": 12.9716,
+    "lon": 77.5946,
+    "traffic_points": [
+      {"name": "Outer Ring Road", "lat": 12.93, "lon": 77.68},
+      {"name": "MG Road", "lat": 12.975, "lon": 77.607},
+      {"name": "Hosur Road", "lat": 12.92, "lon": 77.61}
+    ]
+  },
+  "Chennai": {
+    "lat": 13.0827,
+    "lon": 80.2707,
+    "traffic_points": [
+      {"name": "Anna Salai", "lat": 13.06, "lon": 80.25},
+      {"name": "OMR", "lat": 12.96, "lon": 80.24},
+      {"name": "GST Road", "lat": 12.99, "lon": 80.22}
+    ]
+  },
+  "Kolkata": {
+    "lat": 22.5726,
+    "lon": 88.3639,
+    "traffic_points": [
+      {"name": "EM Bypass", "lat": 22.51, "lon": 88.40},
+      {"name": "AJC Bose Road", "lat": 22.55, "lon": 88.35},
+      {"name": "VIP Road", "lat": 22.60, "lon": 88.42}
+    ]
+  },
+  "Hyderabad": {
+    "lat": 17.385,
+    "lon": 78.4867,
+    "traffic_points": [
+      {"name": "ORR Gachibowli", "lat": 17.44, "lon": 78.35},
+      {"name": "Tank Bund Road", "lat": 17.42, "lon": 78.47},
+      {"name": "NH-65", "lat": 17.38, "lon": 78.40}
+    ]
+  },
+  "Pune": {
+    "lat": 18.5204,
+    "lon": 73.8567,
+    "traffic_points": [
+      {"name": "Mumbai-Pune Expressway", "lat": 18.55, "lon": 73.78},
+      {"name": "FC Road", "lat": 18.52, "lon": 73.84},
+      {"name": "Solapur Road", "lat": 18.49, "lon": 73.90}
+    ]
+  },
+  "Lucknow": {
+    "lat": 26.8467,
+    "lon": 80.9462,
+    "traffic_points": [
+      {"name": "Shaheed Path", "lat": 26.80, "lon": 80.99},
+      {"name": "Faizabad Road", "lat": 26.87, "lon": 81.00},
+      {"name": "Kanpur Road", "lat": 26.82, "lon": 80.88}
+    ]
+  },
+  "Ahmedabad": {
+    "lat": 23.0225,
+    "lon": 72.5714,
+    "traffic_points": [
+      {"name": "SG Highway", "lat": 23.03, "lon": 72.51},
+      {"name": "Ashram Road", "lat": 23.03, "lon": 72.58},
+      {"name": "SP Ring Road", "lat": 23.07, "lon": 72.63}
+    ]
+  },
+  "Jaipur": {
+    "lat": 26.9124,
+    "lon": 75.7873,
+    "traffic_points": [
+      {"name": "JLN Marg", "lat": 26.90, "lon": 75.80},
+      {"name": "Tonk Road", "lat": 26.87, "lon": 75.79},
+      {"name": "Ajmer Road", "lat": 26.91, "lon": 75.74}
+    ]
+  }
+}
