@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 export type TabId = 
   | "live" 
   | "causal" 
+  | "compare"
   | "simulator" 
   | "interventions" 
   | "ward" 
@@ -15,6 +16,7 @@ const NAV_ITEMS = [
   { id: "overview-cat", label: "Overview", type: "category" },
   { id: "live", label: "Live Intelligence", icon: "📊", type: "link" },
   { id: "causal", label: "Causal Prosecutor", icon: "⚖️", type: "link" },
+  { id: "compare", label: "City Compare", icon: "🌐", type: "link" },
   
   { id: "planning-cat", label: "Planning", type: "category" },
   { id: "simulator", label: "Policy Simulator", icon: "🧪", type: "link" },
