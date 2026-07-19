@@ -4,6 +4,7 @@ import { Navbar } from "./components/Navbar";
 import { Sidebar, TabId } from "./components/Sidebar";
 import { LiveIntelligence } from "./pages/LiveIntelligence";
 import { CausalProsecutor } from "./pages/CausalProsecutor";
+import { CityCompare } from "./pages/CityCompare";
 import { WardIntelligence } from "./pages/WardIntelligence";
 import { LandingPage } from "./pages/LandingPage";
 import { DEFAULT_CITY } from "./lib/cities";
@@ -39,6 +40,8 @@ export default function App() {
         return <LiveIntelligence city={city} />;
       case "causal":
         return <CausalProsecutor city={city} />;
+      case "compare":
+        return <CityCompare />;
       case "ward":
         return <WardIntelligence city={city} />;
       case "simulator":
