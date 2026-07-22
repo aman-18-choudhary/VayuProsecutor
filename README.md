@@ -71,11 +71,11 @@ Urban air quality management is currently reactive. City administrators rely on 
 
 | Causal Prosecutor | Policy Simulator |
 |:---:|:---:|
-| <img src="screenshots/CASUAL_PROSECUTOR.jpg" width="500"> | <img src="screenshots/POLICY_SIMULATOR.jpg" width="500"> |
+| <img src="screenshots/CASUAL_PROSECUTOR.jpg" width="500"> | <img src="screenshots/policy-simulator.jpg" width="500"> |
 
-| Ward Intelligence | Environmental Reports |
+| Ward Intelligence | City Compare |
 |:---:|:---:|
-| <img src="screenshots/WARD_INTELLIGENCE.jpg" width="500"> | <img src="screenshots/ENVIRONMENTAL_REPORTS.jpg" width="500"> |
+| <img src="screenshots/ward_intelligence.jpg" width="500"> | <img src="screenshots/city-compare.jpg" width="500"> |
 
 ---
 
