@@ -67,15 +67,15 @@ Urban air quality management is currently reactive. City administrators rely on 
 
 | Landing Page | Command Dashboard |
 |:---:|:---:|
-| *(Placeholder: Landing Page)* | *(Placeholder: Smart City Dashboard)* |
+| <img src="screenshots/landing_page.jpg" width="500"> | <img src="screenshots/live-INTELLIGENCE.jpg" width="500"> |
 
 | Causal Prosecutor | Policy Simulator |
 |:---:|:---:|
-| *(Placeholder: Causal DAG view)* | *(Placeholder: Policy simulation sliders)* |
+| <img src="screenshots/CASUAL_PROSECUTOR.jpg" width="500"> | <img src="screenshots/POLICY_SIMULATOR.jpg" width="500"> |
 
 | Ward Intelligence | Environmental Reports |
 |:---:|:---:|
-| *(Placeholder: Ward Risk Map)* | *(Placeholder: Report Generation Modal)* |
+| <img src="screenshots/WARD_INTELLIGENCE.jpg" width="500"> | <img src="screenshots/ENVIRONMENTAL_REPORTS.jpg" width="500"> |
 
 ---
 
