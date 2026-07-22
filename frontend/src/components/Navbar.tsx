@@ -3,10 +3,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { CITIES } from "../lib/cities";
 import { LiveDot } from "./ui";
 
+import { City } from "../lib/types";
+import { CitySelector } from "./CitySelector";
+
 /* ── Types ─────────────────────────────────────────────── */
 interface NavbarProps {
-  city: string;
-  onCityChange: (c: string) => void;
+  city: City;
+  onCityChange: (c: City) => void;
   onMenuClick?: () => void;
 }
 
@@ -30,88 +33,7 @@ function formatIST(d: Date): string {
   });
 }
 
-/* ── City Selector dropdown ─────────────────────────────── */
-function CityDropdown({
-  city,
-  onCityChange,
-}: {
-  city: string;
-  onCityChange: (c: string) => void;
-}) {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <div className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((p) => !p)}
-        className="flex items-center gap-2 rounded-xl border border-border bg-white px-3.5 py-2 text-sm font-semibold text-text-primary shadow-sm transition-all hover:border-primary hover:shadow-card"
-        aria-haspopup="listbox"
-        aria-expanded={open}
-      >
-        <span className="text-base">📍</span>
-        <span>{city}</span>
-        <svg
-          className={`h-3.5 w-3.5 text-text-secondary transition-transform ${
-            open ? "rotate-180" : ""
-          }`}
-          viewBox="0 0 20 20"
-          fill="currentColor"
-        >
-          <path
-            fillRule="evenodd"
-            d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
-            clipRule="evenodd"
-          />
-        </svg>
-      </button>
-
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, y: -8, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.96 }}
-            transition={{ duration: 0.15, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute right-0 top-full z-[9999] mt-2 min-w-[160px] overflow-hidden rounded-xl border border-border bg-white shadow-card-xl"
-            role="listbox"
-          >
-            <div className="py-1">
-              {CITIES.map((c) => (
-                <button
-                  key={c.name}
-                  type="button"
-                  role="option"
-                  aria-selected={c.name === city}
-                  onClick={() => {
-                    onCityChange(c.name);
-                    setOpen(false);
-                  }}
-                  className={[
-                    "w-full px-4 py-2.5 text-left text-sm font-medium transition-colors",
-                    c.name === city
-                      ? "bg-primary/8 text-primary font-semibold"
-                      : "text-text-primary hover:bg-bg-muted",
-                  ].join(" ")}
-                >
-                  {c.name}
-                </button>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Backdrop to close dropdown */}
-      {open && (
-        <div
-          className="fixed inset-0 z-[9998]"
-          onClick={() => setOpen(false)}
-        />
-      )}
-    </div>
-  );
-}
+/* ── Removed static CityDropdown in favor of CitySelector ── */
 
 /* ── Logo SVG ───────────────────────────────────────────── */
 function Logo() {
@@ -171,6 +93,7 @@ function NotificationBell() {
 export function Navbar({ city, onCityChange, onMenuClick }: NavbarProps) {
   const now = useClock();
   const [scrolled, setScrolled] = useState(false);
+  const [selectorOpen, setSelectorOpen] = useState(false);
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 8);
@@ -248,7 +171,32 @@ export function Navbar({ city, onCityChange, onMenuClick }: NavbarProps) {
             {formatIST(now)}
           </span>
           <NotificationBell />
-          <CityDropdown city={city} onCityChange={onCityChange} />
+          
+          <button
+            type="button"
+            onClick={() => setSelectorOpen(true)}
+            className="flex items-center gap-2 rounded-xl border border-border bg-white px-3.5 py-2 text-sm font-semibold text-text-primary shadow-sm transition-all hover:border-primary hover:shadow-card"
+          >
+            <span className="text-base">📍</span>
+            <span>{city.name}</span>
+            <svg
+              className="h-3.5 w-3.5 text-text-secondary"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </button>
+          
+          <CitySelector 
+            isOpen={selectorOpen} 
+            onClose={() => setSelectorOpen(false)} 
+            onSelect={onCityChange} 
+          />
         </div>
       </div>
     </header>

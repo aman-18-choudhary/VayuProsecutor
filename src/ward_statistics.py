@@ -6,6 +6,10 @@ class WardStatistics:
         """
         Estimate area (km^2) and population.
         """
+        import time
+        start_time = time.time()
+        print("[Timing] WardStatistics.calculate_stats start")
+        
         # Reproject to Web Mercator to get meters, then convert to sq km
         # In Indian lat/lon, standard Web Mercator EPSG:3857 works reasonably for approximation
         gdf_proj = gdf.to_crs("EPSG:3857")
@@ -20,4 +24,6 @@ class WardStatistics:
             return max(5000, pop) # Minimum 5000 pop per ward
             
         gdf["population"] = gdf.apply(est_pop, axis=1)
+        
+        print(f"[Timing] WardStatistics.calculate_stats done in {time.time() - start_time:.2f}s")
         return gdf

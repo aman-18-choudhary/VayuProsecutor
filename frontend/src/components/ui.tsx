@@ -126,10 +126,12 @@ export function Badge({
   children,
   variant = "default",
   size = "sm",
+  className = "",
 }: {
   children: React.ReactNode;
   variant?: "default" | "primary" | "success" | "warning" | "danger" | "outline";
   size?: "xs" | "sm";
+  className?: string;
 }) {
   const styles = {
     default:  "bg-gray-100 text-gray-700",
@@ -145,7 +147,7 @@ export function Badge({
   };
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full font-semibold ${styles[variant]} ${sizes[size]}`}
+      className={`inline-flex items-center gap-1 rounded-full font-semibold ${styles[variant]} ${sizes[size]} ${className}`}
     >
       {children}
     </span>

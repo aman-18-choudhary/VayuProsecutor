@@ -5,6 +5,8 @@ import App from "./App";
 import "./index.css";
 import "reactflow/dist/style.css";
 
+import { Toaster } from "react-hot-toast";
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -19,6 +21,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <App />
+      <Toaster position="top-right" />
     </QueryClientProvider>
   </React.StrictMode>
 );

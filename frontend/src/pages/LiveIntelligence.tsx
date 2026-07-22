@@ -65,8 +65,12 @@ function KPIStrip({ live, loading }: { live: any; loading: boolean }) {
 }
 
 /* ── AI Intervention panel ──────────────────────────────── */
-function AIInterventionPanel({ live, loading }: { live: any; loading: boolean }) {
-  if (loading) {
+import { useRecommendations } from "../lib/api";
+
+function AIInterventionPanel({ live, loading, city }: { live: any; loading: boolean; city: any }) {
+  const { data: recs, isLoading: recsLoading } = useRecommendations(city);
+
+  if (loading || recsLoading) {
     return (
       <MotionCard delay={0.25} className="h-full">
         <div className="animate-pulse space-y-4">
@@ -79,11 +83,9 @@ function AIInterventionPanel({ live, loading }: { live: any; loading: boolean })
   }
 
   const sev = getSeverity(live?.aqi ?? 0);
-  const interventions = [
-    { action: "Restrict heavy vehicles (6AM–10AM)", impact: "High",   icon: "🚛" },
-    { action: "Optimize traffic signal timing",      impact: "Medium", icon: "🚦" },
-    { action: "Activate dust suppression units",     impact: "Medium", icon: "💧" },
-  ];
+  
+  const topRec = recs?.recommendations?.[0];
+  const interventions = recs?.recommendations?.slice(0, 3) || [];
 
   const impactColor: Record<string, string> = {
     High:   "#EF4444",
@@ -113,26 +115,32 @@ function AIInterventionPanel({ live, loading }: { live: any; loading: boolean })
       <div className="mb-4 rounded-2xl bg-gradient-to-br from-primary/8 to-secondary/5 p-4">
         <div className="mb-3 flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm text-xl">
-            🚗
+            {topRec?.action.includes("Traffic") || topRec?.action.includes("Vehicle") ? "🚗" : topRec?.action.includes("Construction") ? "🏗️" : topRec?.action.includes("Industr") ? "🏭" : "✅"}
           </div>
           <div>
-            <p className="font-semibold text-text-primary text-sm">
-              Traffic Management
+            <p className="font-semibold text-text-primary text-sm line-clamp-1">
+              {topRec?.action || "Evaluating strategies..."}
             </p>
             <p className="text-[11px] text-text-secondary">Focus: {live?.city} CBD</p>
           </div>
         </div>
         <div className="grid grid-cols-3 gap-2 text-center">
           <div className="rounded-xl bg-white/80 p-2">
-            <p className="font-display text-lg font-extrabold text-success">22–28%</p>
+            <p className="font-display text-lg font-extrabold text-success">
+              {topRec ? `${Math.round(topRec.expected_aqi_drop * 0.8)}–${Math.round(topRec.expected_aqi_drop * 1.2)}` : "—"}
+            </p>
             <p className="text-[9px] text-text-muted uppercase">AQI Reduction</p>
           </div>
           <div className="rounded-xl bg-white/80 p-2">
-            <p className="font-display text-lg font-extrabold text-primary">94%</p>
+            <p className="font-display text-lg font-extrabold text-primary">
+              {topRec ? `${Math.round((topRec.confidence_pct || 0))}%` : "—"}
+            </p>
             <p className="text-[9px] text-text-muted uppercase">Confidence</p>
           </div>
           <div className="rounded-xl bg-white/80 p-2">
-            <p className="font-display text-xs font-extrabold text-danger">HIGH</p>
+            <p className="font-display text-xs font-extrabold text-danger mt-1.5 mb-1.5">
+              {topRec?.priority || "—"}
+            </p>
             <p className="text-[9px] text-text-muted uppercase">Priority</p>
           </div>
         </div>
@@ -149,28 +157,38 @@ function AIInterventionPanel({ live, loading }: { live: any; loading: boolean })
             className="flex items-center justify-between rounded-xl bg-bg-muted px-3 py-2.5"
           >
             <div className="flex items-center gap-2">
-              <span className="text-sm">{iv.icon}</span>
+              <span className="text-sm">{iv.source_icon}</span>
               <span className="text-xs font-medium text-text-secondary">{iv.action}</span>
             </div>
             <span
               className="rounded-full px-2 py-0.5 text-[9px] font-bold"
-              style={{ color: impactColor[iv.impact], backgroundColor: `${impactColor[iv.impact]}15` }}
+              style={{ color: impactColor[iv.priority] || "#888", backgroundColor: `${impactColor[iv.priority] || "#888"}15` }}
             >
-              {iv.impact}
+              {iv.priority}
             </span>
           </motion.div>
         ))}
       </div>
 
-      <GradientButton variant="primary" size="md" className="w-full">
+      <GradientButton 
+        variant="primary" 
+        size="md" 
+        className="w-full"
+        onClick={() => {
+          const evt = new CustomEvent("change-tab", { detail: "interventions" });
+          window.dispatchEvent(evt);
+        }}
+      >
         View Complete Action Plan →
       </GradientButton>
     </MotionCard>
   );
 }
 
+import { City } from "../lib/types";
+
 /* ── Page ───────────────────────────────────────────────── */
-export function LiveIntelligence({ city }: { city: string }) {
+export function LiveIntelligence({ city }: { city: City }) {
   const { data: live, isLoading }          = useLiveData(city);
   const { data: map,  isLoading: mapLoad } = useMapData(city);
 
@@ -185,7 +203,7 @@ export function LiveIntelligence({ city }: { city: string }) {
         <LiveDot />
         <span className="text-xs text-text-muted">
           Real-time data for{" "}
-          <span className="font-semibold text-text-primary">{city}</span>
+          <span className="font-semibold text-text-primary">{city.name}</span>
           {live?.updatedAt && (
             <>
               {" "}· Updated{" "}
@@ -230,7 +248,7 @@ export function LiveIntelligence({ city }: { city: string }) {
           <PollutionMap data={map} loading={mapLoad} />
         </div>
         <div className="lg:col-span-4">
-          <AIInterventionPanel live={live} loading={isLoading} />
+          <AIInterventionPanel live={live} loading={isLoading} city={city} />
         </div>
       </div>
 

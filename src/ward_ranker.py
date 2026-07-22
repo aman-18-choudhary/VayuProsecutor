@@ -1,16 +1,39 @@
 class WardRanker:
     @staticmethod
-    def calculate_ward_score(aqi: int, risk_index: int, forecast_aqi: int) -> dict:
+    def calculate_ward_score(ward: dict) -> dict:
         """
         Calculates the Ward Intelligence Score (0-100) and categorizes it.
         100 = Excellent, 0 = Critical
+        Formula: 35% AQI Severity, 20% Forecast Severity, 15% Population Exposure,
+                 10% Schools, 10% Hospitals, 5% Industrial Density, 5% Traffic Density
         """
-        # Lower AQI is better, higher risk is worse
-        aqi_score = max(0, 100 - (aqi / 3))
-        forecast_score = max(0, 100 - (forecast_aqi / 3))
-        risk_score = 100 - risk_index
+        aqi = ward.get("aqi", 50)
+        forecast_aqi = ward.get("forecast_aqi", aqi)
+        population = ward.get("population", 50000)
+        schools = ward.get("schools_count", 0)
+        hospitals = ward.get("hospitals_count", 0)
+        industry = ward.get("industrial_density", 5) # 0-10
+        traffic = ward.get("traffic_density", 0.5) # 0.0-1.0
         
-        final_score = int(0.5 * aqi_score + 0.3 * risk_score + 0.2 * forecast_score)
+        # Sub-scores (100 = Excellent, 0 = Critical)
+        s_aqi = max(0, min(100, 100 - (aqi / 3)))
+        s_forecast = max(0, min(100, 100 - (forecast_aqi / 3)))
+        s_pop = max(0, min(100, 100 - (population / 3000)))
+        s_schools = max(0, min(100, 100 - (schools * 10)))
+        s_hosp = max(0, min(100, 100 - (hospitals * 15)))
+        s_ind = max(0, min(100, 100 - (industry * 10)))
+        s_traf = max(0, min(100, 100 - (traffic * 100)))
+        
+        # Weighted Contributions
+        c_aqi = 0.35 * s_aqi
+        c_forecast = 0.20 * s_forecast
+        c_pop = 0.15 * s_pop
+        c_schools = 0.10 * s_schools
+        c_hosp = 0.10 * s_hosp
+        c_ind = 0.05 * s_ind
+        c_traf = 0.05 * s_traf
+        
+        final_score = int(c_aqi + c_forecast + c_pop + c_schools + c_hosp + c_ind + c_traf)
         final_score = max(0, min(100, final_score))
         
         if final_score >= 80:
@@ -24,7 +47,17 @@ class WardRanker:
         else:
             category = "Critical"
             
-        return {"score": final_score, "category": category}
+        breakdown = {
+            "aqi": int(c_aqi),
+            "forecast": int(c_forecast),
+            "population": int(c_pop),
+            "schools": int(c_schools),
+            "hospitals": int(c_hosp),
+            "industry": int(c_ind),
+            "traffic": int(c_traf)
+        }
+            
+        return {"score": final_score, "category": category, "breakdown": breakdown}
 
     @staticmethod
     def rank_wards(wards_data: list) -> list:

@@ -12,6 +12,8 @@ class WardRecommendation:
             recs.append({
                 "intervention": "Restrict Heavy Vehicles (BS-IV & below)",
                 "reduction": "12-15%",
+                "aqi_reduction": int(aqi * 0.13),
+                "confidence": "94%",
                 "cost": "Low",
                 "time": "Immediate",
                 "priority": "Critical",
@@ -20,6 +22,8 @@ class WardRecommendation:
             recs.append({
                 "intervention": "Increase Public Transport Frequency",
                 "reduction": "5-8%",
+                "aqi_reduction": int(aqi * 0.06),
+                "confidence": "85%",
                 "cost": "Medium",
                 "time": "24 Hours",
                 "priority": "High",
@@ -29,6 +33,8 @@ class WardRecommendation:
             recs.append({
                 "intervention": "Mandatory Industrial Audit",
                 "reduction": "18-20%",
+                "aqi_reduction": int(aqi * 0.19),
+                "confidence": "91%",
                 "cost": "High",
                 "time": "72 Hours",
                 "priority": "Critical",
@@ -37,6 +43,8 @@ class WardRecommendation:
             recs.append({
                 "intervention": "Halt Non-Essential Manufacturing",
                 "reduction": "25-30%",
+                "aqi_reduction": int(aqi * 0.27),
+                "confidence": "96%",
                 "cost": "High",
                 "time": "Immediate",
                 "priority": "Critical",
@@ -46,6 +54,8 @@ class WardRecommendation:
             recs.append({
                 "intervention": "Deploy Anti-Smog Guns",
                 "reduction": "8-10%",
+                "aqi_reduction": int(aqi * 0.09),
+                "confidence": "78%",
                 "cost": "Medium",
                 "time": "Immediate",
                 "priority": "High",
@@ -55,6 +65,8 @@ class WardRecommendation:
             recs.append({
                 "intervention": "Increase Water Sprinkling on Major Roads",
                 "reduction": "10-12%",
+                "aqi_reduction": int(aqi * 0.11),
+                "confidence": "82%",
                 "cost": "Medium",
                 "time": "Immediate",
                 "priority": "High",
@@ -65,6 +77,8 @@ class WardRecommendation:
             recs.append({
                 "intervention": "Close Schools & Issue Public Health Advisory",
                 "reduction": "N/A",
+                "aqi_reduction": 0,
+                "confidence": "99%",
                 "cost": "High",
                 "time": "Immediate",
                 "priority": "Critical",

@@ -1,66 +1,66 @@
 import numpy as np
 import geopandas as gpd
 from shapely.geometry import Polygon, Point, box
-from scipy.spatial import Voronoi
 
 class WardMapper:
     @staticmethod
-    def generate_voronoi_wards(stations, city_name, lat, lon, radius_deg=0.15):
+    def generate_grid_wards(stations, city_name, lat, lon, radius_deg=0.15):
         """
-        Generate Voronoi polygons around AQI monitoring stations, clipped to a bounding box.
-        This serves as 'Estimated Operational Zones' when official boundaries are unavailable.
+        Generate a 1km x 1km (approx) square grid over the city bounding box.
+        Each cell acts as a ward.
         """
-        if not stations:
-            # Fallback single square ward
-            b = box(lon - radius_deg, lat - radius_deg, lon + radius_deg, lat + radius_deg)
-            return gpd.GeoDataFrame({
-                "ward_id": ["W-CENTER"],
-                "ward_name": [f"{city_name} Central Zone"],
-                "is_estimated": [True],
-                "base_aqi": [50],
-                "lon": [lon],
-                "lat": [lat],
-                "geometry": [b]
-            }, crs="EPSG:4326")
-
-        points = np.array([[s["lon"], s["lat"]] for s in stations])
-        d = radius_deg * 2
-        dummy_points = np.array([
-            [lon - d, lat - d], [lon + d, lat - d], 
-            [lon + d, lat + d], [lon - d, lat + d]
-        ])
-        all_points = np.vstack((points, dummy_points))
+        # Roughly 0.01 deg is ~1.1km at equator
+        grid_size = 0.012 
         
-        vor = Voronoi(all_points)
-        polygons = []
-        for i in range(len(stations)):
-            region_idx = vor.point_region[i]
-            region = vor.regions[region_idx]
-            if -1 in region or len(region) == 0:
-                p = Point(stations[i]["lon"], stations[i]["lat"]).buffer(0.02)
-                polygons.append(p)
-            else:
-                poly = Polygon([vor.vertices[v] for v in region])
-                polygons.append(poly)
-                
-        city_box = box(lon - radius_deg, lat - radius_deg, lon + radius_deg, lat + radius_deg)
+        min_lat = lat - radius_deg
+        max_lat = lat + radius_deg
+        min_lon = lon - radius_deg
+        max_lon = lon + radius_deg
+        
+        lat_steps = np.arange(min_lat, max_lat, grid_size)
+        lon_steps = np.arange(min_lon, max_lon, grid_size)
         
         wards = []
-        for i, (poly, s) in enumerate(zip(polygons, stations)):
-            clipped = poly.intersection(city_box)
-            wards.append({
-                "ward_id": f"W-{s['id']}",
-                "ward_name": s["name"],
-                "is_estimated": True,
-                "base_aqi": s.get("aqi", 0),
-                "lon": s["lon"],
-                "lat": s["lat"],
-                "geometry": clipped
-            })
-            
+        count = 1
+        
+        for i in range(len(lat_steps)-1):
+            for j in range(len(lon_steps)-1):
+                y0 = lat_steps[i]
+                y1 = lat_steps[i+1]
+                x0 = lon_steps[j]
+                x1 = lon_steps[j+1]
+                
+                poly = box(x0, y0, x1, y1)
+                centroid = poly.centroid
+                
+                base_aqi = 50
+                if stations:
+                    # find closest station to infer base AQI for the cell
+                    closest_dist = float('inf')
+                    for s in stations:
+                        d = (s["lat"] - centroid.y)**2 + (s["lon"] - centroid.x)**2
+                        if d < closest_dist:
+                            closest_dist = d
+                            base_aqi = s.get("aqi") or 50
+
+                wards.append({
+                    "ward_id": f"W-{count:04d}",
+                    "ward_name": f"{city_name} Grid {count:04d}",
+                    "is_estimated": True,
+                    "base_aqi": base_aqi,
+                    "lon": centroid.x,
+                    "lat": centroid.y,
+                    "geometry": poly
+                })
+                count += 1
+                
         return gpd.GeoDataFrame(wards, crs="EPSG:4326")
 
     @staticmethod
     def get_ward_boundaries(city_name, lat, lon, stations):
-        # Fallback to Voronoi based on AQI stations to guarantee 100% reliability during hackathon.
-        return WardMapper.generate_voronoi_wards(stations, city_name, lat, lon)
+        import time
+        start_time = time.time()
+        print("[Timing] WardMapper.get_ward_boundaries start")
+        result = WardMapper.generate_grid_wards(stations, city_name, lat, lon)
+        print(f"[Timing] WardMapper.get_ward_boundaries done in {time.time() - start_time:.2f}s")
+        return result
