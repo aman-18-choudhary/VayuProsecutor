@@ -221,7 +221,7 @@ npm run dev
 
 ---
 
-## 🎯 Demo Walkthrough (For Judges)
+## 🎯 Demo Walkthrough
 
 To fully experience the application, follow this optimal flow:
 1. **Landing Page**: Click *Explore Intelligence* to see the product discovery view, then *Launch Command Center*.
@@ -240,7 +240,6 @@ To fully experience the application, follow this optimal flow:
 
 ---
 
----
 
 ## 📄 License
 This project is licensed under the MIT License.
