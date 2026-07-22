@@ -240,9 +240,6 @@ To fully experience the application, follow this optimal flow:
 
 ---
 
-## 👥 Contributors
-- **Aman Choudhary** - *Lead Architect & AI Engineer*
-
 ---
 
 ## 📄 License
