@@ -8,7 +8,7 @@ from typing import Dict, Any, List
 
 
 class IndustrialMapper:
-    OVERPASS_URL = "https://overpass-api.de/api/interpreter"
+    OVERPASS_URL = "https://maps.mail.ru/osm/tools/overpass/api/interpreter"
 
     QUERIES = {
         "industrial": 'node["landuse"="industrial"]',
@@ -42,10 +42,34 @@ class IndustrialMapper:
                 resp = requests.post(
                     cls.OVERPASS_URL,
                     data={"data": query},
+                    headers={"User-Agent": "VayuProsecutor/1.0 (aman@example.com)", "Accept": "application/json"},
                     timeout=25,
                 )
                 resp.raise_for_status()
-                elements = resp.json().get("elements", [])
+                resp_json = resp.json()
+                elements = resp_json.get("elements", [])
+                
+                if not elements:
+                    print(f"\n--- OVERPASS INDUSTRIAL DEBUG ({source_type}) ---")
+                    print("COUNT IS ZERO, ADJUSTING QUERY (expanding radius).")
+                    
+                    adj_query = f"""
+                    [out:json][timeout:25];
+                    (
+                      nwr["landuse"~"industrial|construction|quarry"](around:{radius_m*2},{lat},{lon});
+                    );
+                    out center 30;
+                    """
+                    adj_resp = requests.post(
+                        cls.OVERPASS_URL,
+                        data={"data": adj_query},
+                        headers={"User-Agent": "VayuProsecutor/1.0 (aman@example.com)", "Accept": "application/json"},
+                        timeout=25,
+                    )
+                    adj_resp.raise_for_status()
+                    elements = adj_resp.json().get("elements", [])
+                    if not elements:
+                        print("RAW OVERPASS RESPONSE (STILL ZERO):", adj_resp.text[:500])
 
                 for el in elements:
                     if el.get("type") == "node":
@@ -68,13 +92,17 @@ class IndustrialMapper:
 
                 time.sleep(0.3)
 
-            except Exception:
-                continue
+            except Exception as e:
+                print(f"Industrial Overpass API failed/timed out: {e}")
+                # FALLBACK TO CACHED DATA if rate limited, wait, we don't have an internal cache in IndustrialMapper!
+                # Since IndustrialMapper doesn't have an internal cache, we rely on api_server.py cache.
+                break
 
         total_factories = len(sources["factories"]) + len(sources["industrial"])
         total_construction = len(sources["construction"])
         total_power = len(sources["power_plants"])
         total_all = sum(len(v) for v in sources.values())
+        print("Industrial total_sources:", total_all)
 
         # Industrial density score (0-10)
         density = min(10, total_all * 0.5)

@@ -96,7 +96,7 @@ function SourceBadge({ icon, name }: { icon: string; name: string }) {
 }
 
 /* ── Main Landing Page ───────────────────────────────────── */
-export function LandingPage({ onEnter }: { onEnter: () => void }) {
+export function LandingPage({ onEnter, onExplore }: { onEnter: () => void; onExplore: () => void }) {
   return (
     <div className="min-h-screen bg-bg-base">
       {/* ── HERO ─────────────────────────────────────── */}
@@ -184,7 +184,7 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
             <GradientButton
               variant="outline"
               size="lg"
-              onClick={onEnter}
+              onClick={onExplore}
               className="min-w-[180px]"
             >
               Explore Intelligence

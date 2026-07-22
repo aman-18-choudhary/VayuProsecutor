@@ -4,7 +4,7 @@ import { VerdictCard } from "../components/VerdictCard";
 import { CausalDAG } from "../components/CausalDAG";
 import { LegalBrief } from "../components/LegalBrief";
 import { MotionCard, Skeleton, LiveDot } from "../components/ui";
-import type { SourceStatus } from "../lib/types";
+import type { SourceStatus, City } from "../lib/types";
 
 /* ── Step names for the progress tracker ────────────────── */
 const STEPS = [
@@ -178,8 +178,8 @@ function EvidenceLocker({
   );
 }
 
-/* ── Page ───────────────────────────────────────────────── */
-export function CausalProsecutor({ city }: { city: string }) {
+/* ── Page Component ───────────────────────────────────────── */
+export function CausalProsecutor({ city }: { city: City }) {
   const { data: causal, isLoading } = useCausalData(city);
 
   return (
@@ -195,8 +195,8 @@ export function CausalProsecutor({ city }: { city: string }) {
             Causal Prosecutor
           </h2>
           <p className="text-sm text-text-secondary">
-            AI-powered root cause analysis for{" "}
-            <span className="font-semibold text-text-primary">{city}</span>
+            Causal Source Analysis for{" "}
+            <span className="font-semibold text-text-primary">{city.name}</span>
           </p>
         </div>
         <div className="flex items-center gap-2">

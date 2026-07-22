@@ -2,6 +2,7 @@ import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export type TabId = 
+  | "dashboard"
   | "live" 
   | "causal" 
   | "compare"
@@ -10,9 +11,11 @@ export type TabId =
   | "ward" 
   | "alerts" 
   | "reports" 
-  | "settings";
+  | "settings"
+  | "explore";
 
 const NAV_ITEMS = [
+  { id: "dashboard", label: "Command Center", icon: "🏠", type: "link" },
   { id: "overview-cat", label: "Overview", type: "category" },
   { id: "live", label: "Live Intelligence", icon: "📊", type: "link" },
   { id: "causal", label: "Causal Prosecutor", icon: "⚖️", type: "link" },

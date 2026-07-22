@@ -1,0 +1,42 @@
+{
+  "defaultCity": "Mumbai",
+  "monitoredCities": [
+    "New Delhi",
+    "Mumbai",
+    "Bangalore"
+  ],
+  "favouriteCities": [
+    "New Delhi",
+    "Mumbai"
+  ],
+  "aiProvider": "OpenAI GPT-4o",
+  "confidenceThreshold": 85,
+  "alertThreshold": 150,
+  "forecastHorizon": 72,
+  "simulationPrecision": 95,
+  "emailNotifications": true,
+  "browserNotifications": true,
+  "smsNotifications": false,
+  "criticalAlerts": true,
+  "dailySummary": true,
+  "weeklyReport": false,
+  "emergencyAlerts": true,
+  "aqiThreshold": 200,
+  "pm25Threshold": 60,
+  "pm10Threshold": 100,
+  "no2Threshold": 80,
+  "so2Threshold": 80,
+  "coThreshold": 4,
+  "o3Threshold": 100,
+  "trafficThreshold": 80,
+  "fireDetectionRadius": 50,
+  "riskIndexThreshold": 8,
+  "wardScoreThreshold": 75,
+  "defaultLandingPage": "dashboard",
+  "refreshInterval": 5,
+  "autoRefresh": true,
+  "theme": "system",
+  "compactMode": false,
+  "animationToggle": true,
+  "defaultMapLayer": "aqi"
+}

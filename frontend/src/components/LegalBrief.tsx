@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { MotionCard, Skeleton, GradientButton } from "./ui";
+import { City } from "../lib/types";
 
 const CHARS_PER_TICK = 6;
 const TICK_MS        = 10;
@@ -88,7 +89,7 @@ export function LegalBrief({
   loading,
 }: {
   brief?: string;
-  city: string;
+  city: City;
   loading?: boolean;
 }) {
   const { revealed, done } = useTypewriter(brief);
@@ -103,7 +104,7 @@ export function LegalBrief({
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement("a");
     a.href     = url;
-    a.download = `VayuProsecutor_Brief_${city.replace(/\s+/g, "_")}.txt`;
+    a.download = `VayuProsecutor_Brief_${city.name.replace(/\s+/g, "_")}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -136,7 +137,7 @@ export function LegalBrief({
               IN THE MATTER OF AIR QUALITY
             </h2>
             <p className="font-mono text-xs font-semibold tracking-widest text-primary">
-              CITY OF {city.toUpperCase()} · FORMAL PROSECUTION BRIEF
+              CITY OF {city.name.toUpperCase()} · FORMAL PROSECUTION BRIEF
             </p>
           </div>
           {done && (

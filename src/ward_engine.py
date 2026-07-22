@@ -1,4 +1,6 @@
 import json
+import logging
+import geopandas as gpd
 from typing import Dict, Any, List
 from .ward_mapper import WardMapper
 from .ward_statistics import WardStatistics
